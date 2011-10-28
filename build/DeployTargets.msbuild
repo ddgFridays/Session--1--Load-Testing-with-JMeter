@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+
+	<Import Project="MSBuildCommunityTasks\MSBuild.Community.Tasks.Targets" />
+	<Import Project="Microsoft.Web.Publishing\Microsoft.Web.Publishing.targets" />
+	<Import Project="MSBuildExtensionPack\MSBuild.ExtensionPack.tasks" />
+  <UsingTask TaskName="MSBuildTasks.RemoveDir" AssemblyFile="DotShop.MSBuildTasks.dll"/>
+
+	<PropertyGroup>
+		<ClassLibraryOutputDirectory>bin\$(Configuration)</ClassLibraryOutputDirectory>
+	</PropertyGroup>
+
+  <Target Name="PreDeployCheck" Inputs="@(Site)" Outputs="%(Identity).FakeForEachLoop">
+    <MSBuild.ExtensionPack.Web.Iis7AppPool
+            TaskAction="CheckExists"
+            Name="%(Site.WebApplicationHostName)"
+            MachineName="$(IISMachineName)">
+      <Output TaskParameter="Exists"
+              PropertyName="AppPoolExists"/>
+    </MSBuild.ExtensionPack.Web.Iis7AppPool>
+
+    <Error Condition="'$(AppPoolExists)'=='False'" Text="AppPool %(Site.WebApplicationHostName) does not exist. You will need to create this before running this script"/>
+  </Target>
+
+	<Target Name="Precompile" Inputs="@(Site)" Outputs="%(Identity).FakeForEachLoop">
+		<AspNetCompiler
+			Clean="True"
+			Debug="True"
+			Force="True"
+			PhysicalPath="%(Site.ProjectPath)"
+			TargetPath="%(Site.BuildPath)\PrecompiledWeb"
+			VirtualPath="/%(Site.Name)" />
+		<AspNetMerge
+			ApplicationPath="%(Site.BuildPath)\PrecompiledWeb"
+			ExePath="Tools"
+			SingleAssemblyName="%(Site.Name).Precompiled.dll"
+			RemoveCompiledFiles="true" />
+	</Target>
+
+	<Target Name="TransformWebConfig" Inputs="@(Site)" Outputs="%(Identity).FakeForEachLoop">
+		<ItemGroup>
+			<WebConfigs Include="%(Site.BuildPath)\PrecompiledWeb\*.config"/>
+		</ItemGroup>
+		
+		<MakeDir 
+			Directories="%(Site.BuildPath)\WebConfig" 
+			ContinueOnError="true"/>
+		<CreateProperty Value="%(Site.BuildPath)">
+			<Output PropertyName="DestinationRoot" TaskParameter="Value"/>
+		</CreateProperty>
+		<MSBuild.Community.Tasks.Move
+			SourceFiles="@(WebConfigs)" 
+			DestinationFiles="@(WebConfigs->'$(DestinationRoot)\WebConfig\%(Filename)%(Extension)')"/>
+		<TransformXml 
+			Source="%(Site.BuildPath)\WebConfig\Web.Config" 
+			Transform="%(Site.BuildPath)\WebConfig\Web.$(Configuration).config" 
+			Destination="%(Site.BuildPath)\PrecompiledWeb\Web.Config" />
+		<MSBuild.Community.Tasks.Move 
+			SourceFiles="%(Site.BuildPath)\WebConfig\PrecompiledApp.config" 
+			DestinationFiles="%(Site.BuildPath)\PrecompiledWeb\PrecompiledApp.config"/>
+	</Target>
+
+	<Target Name="Deploy" Inputs="@(Site)" Outputs="%(Identity).FakeForEachLoop">
+    <ItemGroup>
+      <FilesToDeploy Include="%(Site.BuildPath)\PrecompiledWeb\**\*.*" />
+    </ItemGroup>
+
+    <CreateProperty Value="%(Site.WebApplicationPath)">
+      <Output PropertyName="WebAppPath" TaskParameter="Value"/>
+    </CreateProperty>
+    
+		<MSBuild.ExtensionPack.Web.Iis7Website
+            TaskAction="CheckExists"
+            Name="%(Site.WebApplicationHostName)"
+            MachineName="$(IISMachineName)">
+			<Output
+            TaskParameter="Exists"
+            PropertyName="WebApplicationExists"/>
+		</MSBuild.ExtensionPack.Web.Iis7Website>
+    
+		<MSBuild.ExtensionPack.Web.Iis7Website
+            TaskAction="Create"
+            Name="%(Site.WebApplicationHostName)"
+            MachineName="$(IISMachineName)"
+            Path="%(Site.WebApplicationPath)"
+            Port="80"
+            AppPool="%(Site.WebApplicationHostName)"
+            Condition="'$(WebApplicationExists)'=='False'"/>
+
+		<MSBuild.ExtensionPack.Web.Iis7Binding
+            TaskAction="Add"
+            Name="%(Site.WebApplicationHostName)"
+            MachineName="$(IISMachineName)"
+            BindingInformation="*:80:%(Site.Binding)"
+            BindingProtocol="http"
+            Condition="'$(WebApplicationExists)'=='False'"/>
+
+    <MSBuild.ExtensionPack.Web.Iis7Binding
+        TaskAction="Remove"
+        Name="%(Site.WebApplicationHostName)"
+        MachineName="$(IISMachineName)"
+        BindingInformation="*:80:" />
+    
+		<MSBuild.Community.Tasks.Sleep Milliseconds="2000"/>
+    
+		<MSBuild.ExtensionPack.Web.Iis7Website
+            TaskAction="Stop"
+            Name="%(Site.WebApplicationHostName)"
+            MachineName="$(IISMachineName)"/>
+    
+		<MSBuild.Community.Tasks.Sleep Milliseconds="2000" />
+    
+		<RemoveDir Directories="%(Site.WebApplicationPath)" Retries="10"/>
+
+    <Copy
+      SourceFiles="@(FilesToDeploy)"
+      DestinationFiles="@(FilesToDeploy->'$(WebAppPath)\%(RecursiveDir)%(Filename)%(Extension)')"/>
+
+    <MSBuild.ExtensionPack.Web.Iis7Website
+        TaskAction="Start"
+        Name="%(Site.WebApplicationHostName)"
+        MachineName="$(IISMachineName)" />
+    
+		<MSBuild.Community.Tasks.Sleep Milliseconds="2000" />
+	</Target>
+
+	<Target Name="CleanUp" Inputs="@(Site)" Outputs="%(Identity).FakeForEachLoop">
+		<RemoveDir Directories="%(Site.BuildPath)\PrecompiledWeb"/>
+	</Target>
+</Project>

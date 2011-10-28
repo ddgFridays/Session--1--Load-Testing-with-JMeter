@@ -1,0 +1,22 @@
+﻿@model LoadTestDemo.Models.PlayerModel
+
+<div>
+    <h2>@Model.Name</h2>
+
+    <img src="@Url.Content("/Content/images/" + @Model.ImageName)" alt="Image of @Model.Name" />
+
+    <div class="display-label">Club</div>
+    <div class="display-field">@Model.Club</div>
+
+    <div class="display-label">Position</div>
+    <div class="display-field">@Model.Position</div>
+
+    <div class="display-label">Value (£ million)</div>
+    <div class="display-field">@Model.Value</div>
+
+    <div class="display-label">Points</div>
+    <div class="display-field">@Model.Points</div>
+
+    <div class="display-label">Points this week</div>
+    <div class="display-field">@Model.WeekPoints</div>
+</div>

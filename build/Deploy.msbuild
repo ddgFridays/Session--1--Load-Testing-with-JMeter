@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+		 DefaultTargets="Run"
+		 ToolsVersion="4.0">
+
+  <Import Project="DeployTargets.msbuild" />
+
+  <PropertyGroup Label="BasePaths">
+    <BaseBuildPath>$(BuildRoot)\LoadTestDemo\$(BUILD_NUMBER)</BaseBuildPath>
+    <BaseWebApplicationPath>$(WebApplicationRoot)\LoadTestDemo</BaseWebApplicationPath>
+  </PropertyGroup>
+
+  <!-- Sites to deploy -->
+  <ItemGroup>
+    <Site Include="Fantasy Football Site">
+      <Name>Shop</Name>
+      <ProjectPath>..\LoadTestDemo</ProjectPath>
+      <BuildPath>$(BaseBuildPath)\LoadTestDemo</BuildPath>
+      <WebApplicationHostName>loadtestdemo.dotshop</WebApplicationHostName>
+      <WebApplicationPath>$(BaseWebApplicationPath)\loadtestdemo</WebApplicationPath>
+      <Binding>loadtestdemo.dotshop</Binding>
+    </Site>
+  </ItemGroup>
+
+  <Target Name="Run">
+    <CallTarget Targets="PreDeployCheck;Precompile;TransformWebConfig;Deploy;CleanUp"/>
+  </Target>
+</Project>

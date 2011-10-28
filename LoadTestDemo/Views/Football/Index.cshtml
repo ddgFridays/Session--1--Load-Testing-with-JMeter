@@ -1,0 +1,17 @@
+﻿@model LoadTestDemo.Models.TeamModel
+
+Team: @Model.Name (@Model.Points points)
+<hr />
+<table>
+    <tr><th>Name</th><th>Club</th><th>Position</th><th>Value (£ million)</th><th>Points</th></tr>
+    @foreach (var player in Model.Players)
+    {
+        <tr>
+            <td>@Html.ActionLink(player.Name, "Player", new { Name = player.Name })</td>
+            <td>@player.Club</td>
+            <td>@player.Position</td>
+            <td>@player.Value</td>
+            <td>@player.Points</td>
+        </tr>
+    }
+</table>

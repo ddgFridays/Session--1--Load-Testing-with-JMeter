@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003"
+		 DefaultTargets="Run"
+		 ToolsVersion="4.0">
+
+  <PropertyGroup Label="Command Line Parameters">
+    <FFHost>localhost</FFHost>
+    <FFPort>52858</FFPort>
+    <FFUsers>1</FFUsers>
+    <FFPlan>$(teamcity_build_workingDir)/jmeter/plans/ViewTeamAndPlayerPlan.jmx</FFPlan>
+    <FFResults>$(teamcity_build_workingDir)/Results.jmx</FFResults>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Configuration">
+    <JMeter>$(teamcity_build_workingDir)/jmeter/bin/jmeter</JMeter>
+  </PropertyGroup>
+  
+  <Target Name="Run">
+    <Exec Command="$(JMeter) -n -t $(FFPlan) -Jff.host=$(FFHost) -Jff.port=$(FFPort) -Jff.users=$(FFUsers) -Jff.output=$(FFResults)"/>
+  </Target>
+</Project>

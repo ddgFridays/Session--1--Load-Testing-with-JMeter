@@ -1,0 +1,9 @@
+[Bb]in/
+[Rr]elease/
+[Dd]ebug/
+[Pp]roperties/
+
+*.suo
+*.user
+_ReSharper.LoadTestDemo/
+*.vssscc
