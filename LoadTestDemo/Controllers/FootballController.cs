@@ -25,7 +25,6 @@ namespace LoadTestDemo.Controllers
 
         public ActionResult Player(string name)
         {
-            //Thread.Sleep(1000);
             var team = _repository.GetByUser(User.Identity.Name);
             var player = team.Players.Single(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
             return View(player);
